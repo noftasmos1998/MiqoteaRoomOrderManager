@@ -1,0 +1,14 @@
+{
+    "Author": "Noftasmos Moon",
+    "Name": "Miqo'tea Room Order Manager",
+    "Punchline": "Plugin to help servers do math since they have lil brain.",
+    "Description": "A plugin that will hopefully make servers life easier.",
+    "InternalName": "orderManager",
+    "ApplicableVersion": "any",
+    "IconUrl": "https://i.imgur.com/b0VNoyG.png",
+    "Tags": [
+        "miqo'tea'",
+        "plugin",
+        "private"
+    ]
+}
