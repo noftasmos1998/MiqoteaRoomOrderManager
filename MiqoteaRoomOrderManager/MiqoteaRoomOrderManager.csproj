@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Authors></Authors>
-    <Company></Company>
-    <Version>0.0.0.1</Version>
-    <Description>A sample plugin.</Description>
+    <Authors>Noftasmos Moon</Authors>
+    <Company>Miqotea Room</Company>
+    <Version>1.0.1</Version>
+    <Description>Miqotea Room Order Manager.</Description>
     <Copyright></Copyright>
     <PackageProjectUrl>https://github.com/noftasmos1998/MiqoteaRoomOrderManager</PackageProjectUrl>
   </PropertyGroup>
