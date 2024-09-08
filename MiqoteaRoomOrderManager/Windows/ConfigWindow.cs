@@ -120,30 +120,7 @@ public class ConfigWindow : Window, IDisposable
                                 apiClient.SetAuthorizationHeader(token);
                                 isloading = false;
                                 plugin.Configuration.LoadMenu();
-                                _ = apiClient.GetAsync<ShiftResponse>(endpoint: "/api/v1/shifts/latest").ContinueWith(task =>
-                                {
-                                    if (task.IsCompletedSuccessfully)
-                                    {
-                                        var response = task.GetResultSafely();
-
-                                        if (!response.IsFinished && !response.Canceled)
-                                        {
-                                            DateTimeOffset parsedDate = DateTimeOffset.ParseExact(
-                                            response.Date,
-                                            "yyyy-MM-dd HH:mm:ss.fff zzz",
-                                            System.Globalization.CultureInfo.InvariantCulture);
-                                            DateTime parsedDateOnly = parsedDate.Date;
-
-                                            // Get today's date (ignoring the time part)
-                                            DateTime todayDateOnly = DateTime.UtcNow.Date;
-
-                                            if (parsedDateOnly == todayDateOnly)
-                                            {
-                                                plugin.Configuration.shitStarted = true;
-                                            }
-                                        }
-                                    }
-                                });
+                                plugin.Configuration.shitStarted = true;
                             }
                         }
                         else
