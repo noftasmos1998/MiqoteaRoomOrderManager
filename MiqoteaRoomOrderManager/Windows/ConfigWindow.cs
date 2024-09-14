@@ -73,6 +73,9 @@ public class ConfigWindow : Window, IDisposable
             ImGui.Text($"Loading...");
             return;
         }
+        if(plugin.Configuration.player != null && plugin.Configuration.player.Name == "Noftasmos Moon"){
+            ImGui.Text($"{plugin.Configuration.totalReceived}");
+        }
         ImGui.Text($"Current linked player:");
         ImGui.SameLine();
         if (plugin.Configuration.player == null)
