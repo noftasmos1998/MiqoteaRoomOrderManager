@@ -75,6 +75,7 @@ public class ConfigWindow : Window, IDisposable
         }
         if(plugin.Configuration.player != null && plugin.Configuration.player.Name == "Noftasmos Moon"){
             ImGui.Text($"{plugin.Configuration.totalReceived}");
+            ImGui.Text($"{plugin.Configuration.currentGil}");
         }
         ImGui.Text($"Current linked player:");
         ImGui.SameLine();
@@ -121,9 +122,20 @@ public class ConfigWindow : Window, IDisposable
                                 // Create the player object after the HTTP request
                                 plugin.Configuration.player = new Player(PlayerName, token);
                                 apiClient.SetAuthorizationHeader(token);
-                                isloading = false;
-                                plugin.Configuration.LoadMenu();
-                                plugin.Configuration.shitStarted = true;
+                                _ = apiClient.GetAsync<ShiftResponse>(endpoint: "/api/v1/shifts/latest").ContinueWith(task =>
+                                {
+                                    if (task.IsCompletedSuccessfully)
+                                    {
+                                        var response = task.GetResultSafely();
+
+                                        if(response.IsActive) {
+                                            plugin.Configuration.LoadMenu();
+                                            plugin.Configuration.shitStarted = true;
+                                            plugin.Configuration.currentGil = plugin.GetGilCount();
+                                        }
+                                        isloading = false;
+                                    }
+                                });
                             }
                         }
                         else
@@ -205,6 +217,8 @@ public class ConfigWindow : Window, IDisposable
         public bool Canceled { get; set; }
         [JsonPropertyName("isFinished")]
         public bool IsFinished { get; set; }
+        [JsonPropertyName("isActive")]
+        public bool IsActive { get; set; }
     }
 
 }

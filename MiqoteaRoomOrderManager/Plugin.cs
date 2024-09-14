@@ -37,7 +37,6 @@ namespace MiqoteaRoomOrderManager
         public Plugin()
         {
             Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
-            Configuration.currentGil = GetGilCount();
 
             var logoPath = Path.Combine(PluginInterface.AssemblyLocation.Directory?.FullName!, "logo.png");
 
@@ -107,7 +106,7 @@ namespace MiqoteaRoomOrderManager
             }
         }
 
-        unsafe private uint GetGilCount()
+        unsafe public uint GetGilCount()
         {
             var invManager = InventoryManager.Instance();
 
