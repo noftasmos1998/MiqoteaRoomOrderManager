@@ -25,6 +25,8 @@ namespace MiqoteaRoomOrderManager
         public readonly MiqoteaAPIHelper apiClient = new();
         public bool IsConfigWindowMovable { get; set; } = true;
         public List<string> TypeOrder = new List<string> { "starter", "main", "dessert", "drink" };
+        public uint currentGil { get; set; } = 0;
+        public uint totalReceived { get; set; } = 0;
 
         public void Save()
         {

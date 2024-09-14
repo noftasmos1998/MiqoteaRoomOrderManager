@@ -42,10 +42,12 @@ public class MainWindow : Window, IDisposable
         [JsonPropertyName("order")]
         public OrderContentResponse Order { get; set; }
     }
-    public class OrderRequest(int total, OrderItem[] orderItems)
+    public class OrderRequest(int total,uint totalRecieved, OrderItem[] orderItems)
     {
         [JsonPropertyName("total")]
         public int total { get; set; } = total;
+        [JsonPropertyName("totalRecieved")]
+        public uint totalRecieved { get; set; } = totalRecieved;
 
         [JsonPropertyName("orderItems")]
         public OrderItem[] orderItems { get; set; } = orderItems;
@@ -210,12 +212,13 @@ public class MainWindow : Window, IDisposable
             ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.16f, 0.65f, 0.02f, 1));
             if (ImGui.Button("Finish Order", new Vector2(100f, 25f)))
             {
-                var requestBody = new OrderRequest(GrandTotal, FoodList.Select(food => new OrderItem(food.MenuItemId, food.Amount)).ToArray());
+                var requestBody = new OrderRequest(GrandTotal,Plugin.Configuration.totalReceived, FoodList.Select(food => new OrderItem(food.MenuItemId, food.Amount)).ToArray());
                 Plugin.Configuration.apiClient.PostAsync<OrderRequest, OrderResponse>("/api/v1/orders", requestBody).ContinueWith(task =>
                 {
                     if (task.IsCompletedSuccessfully)
                     {
                         OrderList.RemoveAt(index);
+                        Plugin.Configuration.totalReceived = 0;
                     }
                 });
                 
