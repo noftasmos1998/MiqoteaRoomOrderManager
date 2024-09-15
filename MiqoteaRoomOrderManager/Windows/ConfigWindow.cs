@@ -25,7 +25,7 @@ namespace MiqoteaRoomOrderManager.Windows;
 
 public class ConfigWindow : Window, IDisposable
 {
-    private Plugin plugin;
+    private Plugin Plugin;
     public string CodeInput = "";
     public string Code = "";
     public int PlayerIdx = -1;
@@ -33,7 +33,6 @@ public class ConfigWindow : Window, IDisposable
     public string Password = "";
     public bool isloading = false;
     public bool Error = false;
-    public readonly MiqoteaAPIHelper apiClient = new MiqoteaAPIHelper();
 
     public ConfigWindow(Plugin plugin) : base(
         "Miqo'tea Room Order Manager Config",
@@ -45,7 +44,7 @@ public class ConfigWindow : Window, IDisposable
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
 
-        this.plugin = plugin;
+        this.Plugin = plugin;
 
     }
 
@@ -73,19 +72,19 @@ public class ConfigWindow : Window, IDisposable
             ImGui.Text($"Loading...");
             return;
         }
-        if(plugin.Configuration.player != null && plugin.Configuration.player.Name == "Noftasmos Moon"){
-            ImGui.Text($"{plugin.Configuration.totalReceived}");
-            ImGui.Text($"{plugin.Configuration.currentGil}");
+        if(Plugin.Configuration.player != null && Plugin.Configuration.player.Name == "Noftasmos Moon"){
+            ImGui.Text($"{Plugin.Configuration.totalReceived}");
+            ImGui.Text($"{Plugin.Configuration.currentGil}");
         }
         ImGui.Text($"Current linked player:");
         ImGui.SameLine();
-        if (plugin.Configuration.player == null)
+        if (Plugin.Configuration.player == null)
         {
             ImGui.TextColored(new Vector4(1, 0, 0, 1), "linking has not been complete");
         }
         else
         {
-            ImGui.TextColored(new Vector4(0, 1, 0, 1), $"{plugin.Configuration.player.Name}");
+            ImGui.TextColored(new Vector4(0, 1, 0, 1), $"{Plugin.Configuration.player.Name}");
         }
         ImGui.Spacing();
         ImGui.Spacing();
@@ -95,7 +94,7 @@ public class ConfigWindow : Window, IDisposable
             ImGui.TextColored(new Vector4(1, 0, 0, 1), "Your current character is not present in the database.");
             ImGui.TextColored(new Vector4(1, 0, 0, 1), "Please try with the character that you registered in the admin panel.");
         }
-        if(plugin.Configuration.player == null)
+        if(Plugin.Configuration.player == null)
         {
             ImGui.Text("Password");
             ImGui.InputText("", ref Password, (uint)20, ImGuiInputTextFlags.Password);
@@ -104,7 +103,7 @@ public class ConfigWindow : Window, IDisposable
                 isloading = true;
                 PlayerName = Plugin.ClientState.LocalPlayer?.Name.ToString();
                 var requestBody = new PlayerRequest(PlayerName, Password);
-                    _ = apiClient.PostAsync<PlayerRequest, PlayerResponse>(endpoint: "/api/v1/login", content: requestBody).ContinueWith(task =>
+                    _ = Plugin.apiClient.PostAsync<PlayerRequest, PlayerResponse>(endpoint: "/api/v1/login", content: requestBody).ContinueWith(task =>
                     {
                         if (task.IsCompletedSuccessfully)
                         {
@@ -120,18 +119,18 @@ public class ConfigWindow : Window, IDisposable
                                 PlayerName = Plugin.ClientState.LocalPlayer?.Name.ToString();
                                 string token = response.Token;
                                 // Create the player object after the HTTP request
-                                plugin.Configuration.player = new Player(PlayerName, token);
-                                apiClient.SetAuthorizationHeader(token);
-                                _ = apiClient.GetAsync<ShiftResponse>(endpoint: "/api/v1/shifts/latest").ContinueWith(task =>
+                                Plugin.Configuration.player = new Player(PlayerName, token);
+                                Plugin.apiClient.SetAuthorizationHeader(token);
+                                _ = Plugin.apiClient.GetAsync<ShiftResponse>(endpoint: "/api/v1/shifts/latest").ContinueWith(task =>
                                 {
                                     if (task.IsCompletedSuccessfully)
                                     {
                                         var response = task.GetResultSafely();
 
                                         if(response.IsActive) {
-                                            plugin.Configuration.LoadMenu();
-                                            plugin.Configuration.shitStarted = true;
-                                            plugin.Configuration.currentGil = plugin.GetGilCount();
+                                            Plugin.LoadMenu();
+                                            Plugin.Configuration.shitStarted = true;
+                                            Plugin.Configuration.currentGil = Plugin.GetGilCount();
                                         }
                                         isloading = false;
                                     }
@@ -146,7 +145,7 @@ public class ConfigWindow : Window, IDisposable
                     });
             }
         }
-        if (plugin.Configuration.player != null)
+        if (Plugin.Configuration.player != null)
         {
             ImGui.TextColored(new Vector4(0, 1, 0, 1), $"Linked succesfully");
             ImGui.Spacing();

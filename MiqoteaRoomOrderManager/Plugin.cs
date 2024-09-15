@@ -14,6 +14,8 @@ using System.Text.RegularExpressions;
 using Dalamud.Game.Text.SeStringHandling;
 using System;
 using Dalamud.Game.ClientState.Objects.SubKinds;
+using MiqoteaRoomOrderManager.Helpers;
+using Dalamud.Utility;
 
 namespace MiqoteaRoomOrderManager
 {
@@ -33,6 +35,7 @@ namespace MiqoteaRoomOrderManager
         private ConfigWindow ConfigWindow { get; init; }
         private MainWindow MainWindow { get; init; }
         private InventoryManager InventoryManager { get; init; }
+        public readonly MiqoteaAPIHelper apiClient = new();
 
         public Plugin()
         {
@@ -81,6 +84,37 @@ namespace MiqoteaRoomOrderManager
                     ToggleMainUI();
                     break;
             }
+        }
+
+        public void LoadMenu()
+        {
+            apiClient.GetAsync<MenuResponse>("/api/v1/menus/current").ContinueWith(task =>
+            {
+                if (task.IsCompletedSuccessfully)
+                {
+                    var response = task.GetResultSafely();
+
+                    var menuItems = response.MenuItems;
+
+                    for (var i = 0; i < Configuration.TypeOrder.Count; i++)
+                    {
+                        Configuration.foodList.Add([]);
+                        foreach (var item in menuItems)
+                        {
+                            if (item.Type == Configuration.TypeOrder[i])
+                            {
+                                Configuration.foodList[i].Add(new Food(item.Price, item.Quantity, item.Name, item.Id));
+                            }
+                        }
+                    }
+
+                }
+                else
+                {
+                    // Handle the case when the task fails
+                    Console.WriteLine("Failed to link player with the plugin. Task failed.");
+                }
+            });
         }
 
         private void DrawUI() => WindowSystem.Draw();

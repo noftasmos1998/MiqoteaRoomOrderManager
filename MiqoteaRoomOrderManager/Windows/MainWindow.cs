@@ -10,6 +10,7 @@ using ImGuiScene;
 using System.IO;
 using static MiqoteaRoomOrderManager.Windows.ConfigWindow;
 using System.Text.Json.Serialization;
+using Dalamud.Utility;
 
 namespace MiqoteaRoomOrderManager.Windows;
 
@@ -95,14 +96,43 @@ public class MainWindow : Window, IDisposable
             ImGui.Spacing();
             if (!Plugin.Configuration.shitStarted)
             {
-                ImGui.Indent(263);
+                ImGui.Indent(253);
                 ImGui.Spacing();
                 ImGui.SetWindowFontScale(1.2f);
                 ImGui.TextColored(new Vector4(1, 0, 0, 1), "Shift hasn't started yet!");
                 ImGui.SetWindowFontScale(1f);
                 ImGui.Spacing();
                 ImGui.Spacing();
-                ImGui.Unindent(263);
+                ImGui.Unindent(253);
+                ImGui.Spacing();
+                ImGui.Spacing();
+                ImGui.Spacing();
+                ImGui.Spacing();
+                ImGui.Spacing();
+                ImGui.Spacing();
+                ImGui.Indent(283);
+                ImGui.SetWindowFontScale(1.2f);
+                ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.15f, 0.36f, 0.32f, 1));
+                if (ImGui.Button($"Refresh", new Vector2(100f, 25f)))
+                {
+                    _ = Plugin.apiClient.GetAsync<ShiftResponse>(endpoint: "/api/v1/shifts/latest").ContinueWith(task =>
+                    {
+                        if (task.IsCompletedSuccessfully)
+                        {
+                            var response = task.GetResultSafely();
+
+                            if (response.IsActive)
+                            {
+                                Plugin.LoadMenu();
+                                Plugin.Configuration.currentGil = Plugin.GetGilCount();
+                                Plugin.Configuration.shitStarted = true;
+                            }
+                        }
+                    });
+                }
+                ImGui.PopStyleColor();
+                ImGui.SetWindowFontScale(1f);
+                ImGui.Unindent(283);
             }
             else
             {
@@ -213,7 +243,7 @@ public class MainWindow : Window, IDisposable
             if (ImGui.Button("Finish Order", new Vector2(100f, 25f)))
             {
                 var requestBody = new OrderRequest(GrandTotal,Plugin.Configuration.totalReceived, FoodList.Select(food => new OrderItem(food.MenuItemId, food.Amount)).ToArray());
-                Plugin.Configuration.apiClient.PostAsync<OrderRequest, OrderResponse>("/api/v1/orders", requestBody).ContinueWith(task =>
+                Plugin.apiClient.PostAsync<OrderRequest, OrderResponse>("/api/v1/orders", requestBody).ContinueWith(task =>
                 {
                     if (task.IsCompletedSuccessfully)
                     {

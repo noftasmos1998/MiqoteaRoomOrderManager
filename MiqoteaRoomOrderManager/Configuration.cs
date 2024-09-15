@@ -22,7 +22,6 @@ namespace MiqoteaRoomOrderManager
         public bool shitStarted { get; set; } = false;
         // Food List
         public List<List<Food>> foodList = new();
-        public readonly MiqoteaAPIHelper apiClient = new();
         public bool IsConfigWindowMovable { get; set; } = true;
         public List<string> TypeOrder = new List<string> { "starter", "main", "dessert", "drink" };
         public uint currentGil { get; set; } = 0;
@@ -31,38 +30,6 @@ namespace MiqoteaRoomOrderManager
         public void Save()
         {
             Plugin.PluginInterface.SavePluginConfig(this);
-        }
-
-        public void LoadMenu()
-        {
-            apiClient.SetAuthorizationHeader(player.Token);
-            apiClient.GetAsync<MenuResponse>("/api/v1/menus/current").ContinueWith(task =>
-            {
-                if (task.IsCompletedSuccessfully)
-                {
-                    var response = task.GetResultSafely();
-
-                    var menuItems = response.MenuItems;
-
-                    for (var i = 0; i < TypeOrder.Count; i++)
-                    {
-                        foodList.Add([]);
-                        foreach (var item in menuItems)
-                        {
-                            if(item.Type == TypeOrder[i])
-                            {
-                                foodList[i].Add(new Food(item.Price, item.Quantity, item.Name, item.Id));
-                            }
-                        }
-                    }
-
-                }
-                else
-                {
-                    // Handle the case when the task fails
-                    Console.WriteLine("Failed to link player with the plugin. Task failed.");
-                }
-            });
         }
     }
 
