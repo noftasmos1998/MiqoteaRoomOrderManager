@@ -29,6 +29,7 @@ namespace MiqoteaRoomOrderManager
         [PluginService] internal static ITextureProvider TextureProvider { get; private set; } = null!;
         [PluginService] internal static ICommandManager CommandManager { get; private set; } = null!;
         [PluginService] internal static IClientState ClientState { get; private set; } = null!;
+        [PluginService] internal static IObjectTable ObjectTable { get; private set; } = null!;
 
         public Configuration Configuration { get; init; }
         public WindowSystem WindowSystem = new("MiqoteaRoomOrderManager");
@@ -124,7 +125,11 @@ namespace MiqoteaRoomOrderManager
 
         private void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
         {
-            // Detect the "trade complete" message
+            if (type == XivChatType.SystemMessage && message.TextValue.Contains("Trade request sent"))
+            {
+                Configuration.currentGil = GetGilCount();
+            }
+
             if (type == XivChatType.SystemMessage && message.TextValue.Contains("Trade complete"))
             {
                 // After trade completes, check current gil and calculate difference

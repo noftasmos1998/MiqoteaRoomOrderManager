@@ -173,7 +173,8 @@ public class MainWindow : Window, IDisposable
     {
         private Plugin Plugin;
         public int GrandTotal = 0;
-        public List<Food> FoodList = new();
+        public List<string> ClientList = [];
+        public List<Food> FoodList = [];
         public List<int> QuantityFoodList = new(new int[] { 1, 1, 1, 1 });
         public string OrderName = "";
         public int foodIdxPlatters = 0;
@@ -185,6 +186,7 @@ public class MainWindow : Window, IDisposable
         public int foodQuantityDesserts = 1;
         public int foodQuantityDrinks = 1;
         public string changeOrderName = "";
+        public int currentSelectedUser = 0;
 
         public Order(Plugin plugin, string orderName) 
         {
@@ -218,6 +220,8 @@ public class MainWindow : Window, IDisposable
             ImGui.Spacing();
             FoodContent();
             ImGui.Spacing();
+            //ImGui.Combo($"##Clients{OrderName}", ref currentSelectedUser, ClientList.ToArray(), ClientList.Count);
+            //ImGui.Spacing();
             if (ImGui.BeginTable($"##{OrderName}", 1, ImGuiTableFlags.BordersOuter | ImGuiTableFlags.BordersInner))
             {
                 for (var row = 0; row < FoodList.Count; row++)
