@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Authors>Noftasmos Moon</Authors>
     <Company>Miqotea Room</Company>
-    <Version>1.1.3</Version>
+    <Version>1.1.4</Version>
     <Description>Miqotea Room Order Manager.</Description>
     <Copyright></Copyright>
     <PackageProjectUrl>https://github.com/noftasmos1998/MiqoteaRoomOrderManager</PackageProjectUrl>
