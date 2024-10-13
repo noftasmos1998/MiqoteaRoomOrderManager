@@ -10,6 +10,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Gui;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
@@ -45,7 +46,6 @@ public class ConfigWindow : Window, IDisposable
         };
 
         this.Plugin = plugin;
-
     }
 
     public void Dispose() { }
@@ -67,7 +67,7 @@ public class ConfigWindow : Window, IDisposable
     public override void Draw()
     {
         //Plugin.DrawTablesWindow();
-        if(isloading)
+        if (isloading)
         {
             ImGui.Text($"Loading...");
             return;
@@ -127,7 +127,7 @@ public class ConfigWindow : Window, IDisposable
                                     {
                                         var response = task.GetResultSafely();
 
-                                        if(response.IsActive) {
+                                        if (response.IsActive) {
                                             Plugin.LoadMenu();
                                             Plugin.Configuration.shitStarted = true;
                                             Plugin.Configuration.currentGil = Plugin.GetGilCount();

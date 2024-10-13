@@ -39,13 +39,15 @@ namespace MiqoteaRoomOrderManager
         public int Amount;
         public string Name;
         public int MenuItemId;
+        public int BaseFoodAmount;
 
-        public Food(int price, int amount, string name, int menuItemId)
+        public Food(int price, int amount, string name, int menuItemId, int baseFoodAmount)
         {
             Price = price;
             Amount = amount;
             Name = name;
             MenuItemId = menuItemId;
+            BaseFoodAmount = baseFoodAmount;
         }
     }
 

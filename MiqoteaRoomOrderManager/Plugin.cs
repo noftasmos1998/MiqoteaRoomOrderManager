@@ -16,6 +16,8 @@ using System;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using MiqoteaRoomOrderManager.Helpers;
 using Dalamud.Utility;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace MiqoteaRoomOrderManager
 {
@@ -63,18 +65,18 @@ namespace MiqoteaRoomOrderManager
             // Adds another button that is doing the same but for the main ui of the plugin
             PluginInterface.UiBuilder.OpenMainUi += ToggleMainUI;
 
-            ChatGui.ChatMessage += OnChatMessage;
+            ChatGui.ChatMessage += MainWindow.OnChatMessage;
         }
 
         public void Dispose()
         {
+            ChatGui.ChatMessage -= MainWindow.OnChatMessage;
             WindowSystem.RemoveAllWindows();
 
             ConfigWindow.Dispose();
             MainWindow.Dispose();
 
             CommandManager.RemoveHandler(CommandName);
-            ChatGui.ChatMessage -= OnChatMessage;
         }
 
         private void OnCommand(string command, string args)
@@ -98,13 +100,13 @@ namespace MiqoteaRoomOrderManager
                     var menuItems = response.MenuItems;
 
                     for (var i = 0; i < Configuration.TypeOrder.Count; i++)
-                    {
+                    {   
                         Configuration.foodList.Add([]);
                         foreach (var item in menuItems)
                         {
                             if (item.Type == Configuration.TypeOrder[i])
                             {
-                                Configuration.foodList[i].Add(new Food(item.Price, item.Quantity, item.Name, item.Id));
+                                Configuration.foodList[i].Add(new Food(item.Price, item.Quantity, item.Name, item.Id, item.Quantity));
                             }
                         }
                     }
@@ -123,26 +125,21 @@ namespace MiqoteaRoomOrderManager
 
         public void ToggleMainUI() => MainWindow.Toggle();
 
-        private void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
+        public List<IPlayerCharacter> GetNearbyPlayers()
         {
-            if (type == XivChatType.SystemMessage && message.TextValue.Contains("Trade request sent"))
+            List<IPlayerCharacter> players = [];
+            // Iterate over the objects in the ObjectTable
+            for (var i = 0; i < ObjectTable.Length; i++)
             {
-                Configuration.currentGil = GetGilCount();
-            }
+                var gameObject = ObjectTable[i];
 
-            if (type == XivChatType.SystemMessage && message.TextValue.Contains("Trade complete"))
-            {
-                // After trade completes, check current gil and calculate difference
-                var newCurrentGil = GetGilCount();
-                var gilDifference = newCurrentGil - Configuration.currentGil;
-
-                if (gilDifference > 0)
+                // Check if the object is a PlayerCharacter
+                if (gameObject is IPlayerCharacter player)
                 {
-                    Configuration.totalReceived += gilDifference;
+                    players.Add(player);
                 }
-
-                Configuration.currentGil = newCurrentGil;
             }
+            return players;
         }
 
         unsafe public uint GetGilCount()

@@ -11,6 +11,9 @@ using System.IO;
 using static MiqoteaRoomOrderManager.Windows.ConfigWindow;
 using System.Text.Json.Serialization;
 using Dalamud.Utility;
+using Dalamud.Game.ClientState.Objects.SubKinds;
+using Dalamud.Game.Text;
+using Dalamud.Game.Text.SeStringHandling;
 
 namespace MiqoteaRoomOrderManager.Windows;
 
@@ -18,10 +21,12 @@ public class MainWindow : Window, IDisposable
 {
     private string LogoPath;
     private Plugin Plugin;
-    static List<Order> OrderList = new();
+    public static List<Order> OrderList = new();
     static List<List<Food>> ListOfFoods = new();
     static List<string> ListOfFoodsName = new(new string[] { "Light Bites", "Platters", "Desserts", "Drinks" });
-    public static int Tip = 0;
+    public List<IPlayerCharacter> PlayerList = [];
+    public int CurrentTabOpen = -1;
+    public IPlayerCharacter? selectedPlayer = null;
 
     public class OrderContentResponse
     {
@@ -88,6 +93,30 @@ public class MainWindow : Window, IDisposable
         ImGui.Unindent(235);
         if (Plugin.Configuration.player != null)
         {
+            this.PlayerList = this.Plugin.GetNearbyPlayers();
+            ImGui.Begin("Player List");
+            ImGui.BeginChild("", new Vector2(200, 400), true);
+            for (var i = 0; i < this.PlayerList.Count; i++)
+            {
+                var player = this.PlayerList[i];
+
+                var isSelected = selectedPlayer != null && selectedPlayer.Name.TextValue.Equals(player.Name.TextValue);
+
+                if (ImGui.Selectable(player.Name.TextValue, isSelected))
+                {
+                    selectedPlayer = player;
+                }
+            }
+
+            ImGui.EndChild();
+            ImGui.BeginDisabled(selectedPlayer == null);
+            if (ImGui.Button("Add"))
+            {
+                OrderList[CurrentTabOpen].Customers.Add(selectedPlayer);
+                selectedPlayer = null;
+            }
+            ImGui.EndDisabled();
+            ImGui.End();
             ImGui.SameLine(ImGui.GetWindowWidth() - 160);
             ImGui.Text("Player: ");
             ImGui.SameLine();
@@ -147,6 +176,7 @@ public class MainWindow : Window, IDisposable
                     {
                         if (ImGui.BeginTabItem(OrderList[n].OrderName))
                         {
+                            CurrentTabOpen = n;
                             OrderList[n].DrawOrderContent(n);
                         }
                     }
@@ -169,6 +199,46 @@ public class MainWindow : Window, IDisposable
 
     public void Dispose() { }
 
+    public void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
+    {
+            if (type is XivChatType.SystemMessage or (XivChatType)569)
+        {
+            if(message.TextValue.Contains("Trade request sent to ") || message.TextValue.Contains("Trade complete")) { 
+                string messageText = message.TextValue;
+
+                foreach (var order in OrderList)
+                {
+                    bool messageContainsCustomer = order.MidTrade || order.Customers.Any((customer) => messageText.Contains(customer.Name.TextValue));
+
+                    if (!messageContainsCustomer)
+                    {
+                        continue;
+                    }
+
+                    if (messageText.Contains("Trade request sent to "))
+                    {
+                        this.Plugin.Configuration.currentGil = this.Plugin.GetGilCount();
+                        order.MidTrade = true;
+                    }
+
+                    if (messageText.Contains("Trade complete"))
+                    {
+                        var newCurrentGil = this.Plugin.GetGilCount();
+                        var gilDifference = newCurrentGil - this.Plugin.Configuration.currentGil;
+
+                        if (gilDifference > 0)
+                        {
+                            order.TotalReceived += gilDifference;
+                        }
+                        order.MidTrade = false;
+                    }
+
+                    break;
+                }
+            }
+        }
+    }
+
     public class Order
     {
         private Plugin Plugin;
@@ -187,6 +257,9 @@ public class MainWindow : Window, IDisposable
         public int foodQuantityDrinks = 1;
         public string changeOrderName = "";
         public int currentSelectedUser = 0;
+        public List<IPlayerCharacter> Customers = [];
+        public uint TotalReceived = 0;
+        public bool MidTrade = false;
 
         public Order(Plugin plugin, string orderName) 
         {
@@ -220,9 +293,13 @@ public class MainWindow : Window, IDisposable
             ImGui.Spacing();
             FoodContent();
             ImGui.Spacing();
-            //ImGui.Combo($"##Clients{OrderName}", ref currentSelectedUser, ClientList.ToArray(), ClientList.Count);
-            //ImGui.Spacing();
-            if (ImGui.BeginTable($"##{OrderName}", 1, ImGuiTableFlags.BordersOuter | ImGuiTableFlags.BordersInner))
+            var halfWidth = ImGui.GetWindowWidth() * 0.48f;
+            ImGui.PushItemWidth(halfWidth);
+            // Order list section
+            ImGui.BeginChild("FoodListTableChild", new Vector2(halfWidth, 200), false, ImGuiWindowFlags.AlwaysVerticalScrollbar);
+            ImGui.Text("Order list");
+
+            if (FoodList.Count > 0 && ImGui.BeginTable($"##{OrderName}", 1, ImGuiTableFlags.BordersOuter | ImGuiTableFlags.BordersInner))
             {
                 for (var row = 0; row < FoodList.Count; row++)
                 {
@@ -231,22 +308,48 @@ public class MainWindow : Window, IDisposable
                     ImGui.Text($"{FoodList[row].Name} x ");
                     ImGui.SameLine(0, 0);
                     ImGui.TextColored(new Vector4(0, 255, 0, 1), $"{FoodList[row].Amount}");
+
                     ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0, 0, 0, 0.05f));
-                    ImGui.SameLine(ImGui.GetWindowWidth() - 40);
+                    ImGui.SameLine(ImGui.GetWindowWidth() - 42);
                     if (ImGui.Button($"X##{row}", new Vector2(30f, 20f)))
                     {
-                        GrandTotal -= FoodList[row].Price * FoodList[row].Amount;
+                        GrandTotal -= FoodList[row].Price * (FoodList[row].Amount / FoodList[row].BaseFoodAmount);
                         FoodList.RemoveAt(row);
                     }
                     ImGui.PopStyleColor();
                 }
                 ImGui.EndTable();
             }
+            ImGui.EndChild();
+            ImGui.SameLine();
+
+            // Customer list section
+            ImGui.BeginChild("SelectedUsersTable", new Vector2(halfWidth, 200), false, ImGuiWindowFlags.AlwaysVerticalScrollbar);
+            ImGui.Text("Customer list");
+            if (Customers.Count > 0 && ImGui.BeginTable("##SelectedUsers", 1, ImGuiTableFlags.BordersOuter | ImGuiTableFlags.BordersInner))
+            {
+                for (var row = 0; row < Customers.Count; row++)
+                {
+                    ImGui.TableNextRow();
+                    ImGui.TableNextColumn();
+                    ImGui.Text(Customers[row].Name.TextValue);
+                    ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0, 0, 0, 0.05f));
+                    ImGui.SameLine(ImGui.GetWindowWidth() - 42);
+                    if (ImGui.Button($"X##{row}", new Vector2(30f, 20f)))
+                    {
+                        Customers.RemoveAt(row);
+                    }
+                    ImGui.PopStyleColor();
+                }
+                ImGui.EndTable();
+            }
+            ImGui.EndChild();
+            //ImGui.PopItemWidth();
             ImGui.Spacing();
             ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.16f, 0.65f, 0.02f, 1));
             if (ImGui.Button("Finish Order", new Vector2(100f, 25f)))
             {
-                var requestBody = new OrderRequest(GrandTotal,Plugin.Configuration.totalReceived, FoodList.Select(food => new OrderItem(food.MenuItemId, food.Amount)).ToArray());
+                var requestBody = new OrderRequest(GrandTotal,TotalReceived, FoodList.Select(food => new OrderItem(food.MenuItemId, food.Amount)).ToArray());
                 Plugin.apiClient.PostAsync<OrderRequest, OrderResponse>("/api/v1/orders", requestBody).ContinueWith(task =>
                 {
                     if (task.IsCompletedSuccessfully)
@@ -258,7 +361,6 @@ public class MainWindow : Window, IDisposable
                 
             }
             ImGui.PopStyleColor();
-            ImGui.EndTabItem();
             ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(1, 0.65f, 0, 1));
             if (ImGui.Button("Reset Order", new Vector2(100f, 25f)))
             {
@@ -267,7 +369,8 @@ public class MainWindow : Window, IDisposable
                 QuantityFoodList = new(new int[] { 1, 1, 1, 1 });
                 FoodList.Clear();
             }
-            ImGui.PopStyleColor();
+            ImGui.PopStyleColor();  
+            ImGui.EndTabItem();
         }
 
         public void FoodContent()
@@ -318,7 +421,7 @@ public class MainWindow : Window, IDisposable
                     }
                     else
                     {
-                        FoodList.Add(new Food(foods[idx].Price, foods[idx].Amount, foods[idx].Name, foods[idx].MenuItemId));
+                        FoodList.Add(new Food(foods[idx].Price, foods[idx].Amount, foods[idx].Name, foods[idx].MenuItemId, foods[idx].Amount));
                         FoodList.Last().Amount *= QuantityFoodList[i];
                     }
                 }
