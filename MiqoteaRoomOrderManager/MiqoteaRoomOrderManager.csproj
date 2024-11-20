@@ -1,24 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Dalamud.NET.Sdk/11.0.0">
   <PropertyGroup>
     <Authors>Noftasmos Moon</Authors>
     <Company>Miqotea Room</Company>
-    <Version>1.2.1</Version>
+    <Version>1.2.2</Version>
     <Description>Miqotea Room Order Manager.</Description>
     <Copyright></Copyright>
     <PackageProjectUrl>https://github.com/noftasmos1998/MiqoteaRoomOrderManager</PackageProjectUrl>
   </PropertyGroup>
 
   <PropertyGroup>
-    <TargetFramework>net8.0-windows7.0</TargetFramework>
-    <Platforms>x64</Platforms>
-    <Nullable>enable</Nullable>
-    <LangVersion>latest</LangVersion>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
-    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
-    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+      <AssemblyVersion>1.2.2</AssemblyVersion>
+      <Platforms>x64</Platforms>
+      <NoWarn>IDE0003</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -37,7 +31,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DalamudPackager" Version="2.1.13" />
     <PackageReference Include="Google.Apis.Sheets.v4" Version="1.68.0.3484" />
     <Reference Include="FFXIVClientStructs">
       <HintPath>$(DalamudLibPath)FFXIVClientStructs.dll</HintPath>
