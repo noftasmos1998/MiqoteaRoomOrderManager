@@ -3,14 +3,14 @@
   <PropertyGroup>
     <Authors>Noftasmos Moon</Authors>
     <Company>Miqotea Room</Company>
-    <Version>1.2.2</Version>
+    <Version>1.2.3</Version>
     <Description>Miqotea Room Order Manager.</Description>
     <Copyright></Copyright>
     <PackageProjectUrl>https://github.com/noftasmos1998/MiqoteaRoomOrderManager</PackageProjectUrl>
   </PropertyGroup>
 
   <PropertyGroup>
-      <AssemblyVersion>1.2.2</AssemblyVersion>
+      <AssemblyVersion>1.2.3</AssemblyVersion>
       <Platforms>x64</Platforms>
       <NoWarn>IDE0003</NoWarn>
   </PropertyGroup>
