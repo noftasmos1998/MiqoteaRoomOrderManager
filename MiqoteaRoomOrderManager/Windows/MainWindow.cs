@@ -14,6 +14,8 @@ using Dalamud.Utility;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
+using static System.Net.Mime.MediaTypeNames;
+using System.Drawing;
 
 namespace MiqoteaRoomOrderManager.Windows;
 
@@ -269,6 +271,7 @@ public class MainWindow : Window, IDisposable
         public List<IPlayerCharacter> Customers = [];
         public uint TotalReceived = 0;
         public bool MidTrade = false;
+        public string notes = "";
 
         public Order(Plugin plugin, string orderName) 
         {
@@ -305,7 +308,7 @@ public class MainWindow : Window, IDisposable
             var halfWidth = ImGui.GetWindowWidth() * 0.48f;
             ImGui.PushItemWidth(halfWidth);
             // Order list section
-            ImGui.BeginChild("FoodListTableChild", new Vector2(halfWidth, 200), false, ImGuiWindowFlags.AlwaysVerticalScrollbar);
+            ImGui.BeginChild("FoodListTableChild", new Vector2(halfWidth, 175), false, ImGuiWindowFlags.AlwaysVerticalScrollbar);
             ImGui.Text("Order list");
 
             if (FoodList.Count > 0 && ImGui.BeginTable($"##{OrderName}", 1, ImGuiTableFlags.BordersOuter | ImGuiTableFlags.BordersInner))
@@ -333,7 +336,7 @@ public class MainWindow : Window, IDisposable
             ImGui.SameLine();
 
             // Customer list section
-            ImGui.BeginChild("SelectedUsersTable", new Vector2(halfWidth, 200), false, ImGuiWindowFlags.AlwaysVerticalScrollbar);
+            ImGui.BeginChild("SelectedUsersTable", new Vector2(halfWidth, 175), false, ImGuiWindowFlags.AlwaysVerticalScrollbar);
             ImGui.Text("Customer list");
             if (Customers.Count > 0 && ImGui.BeginTable("##SelectedUsers", 1, ImGuiTableFlags.BordersOuter | ImGuiTableFlags.BordersInner))
             {
@@ -353,7 +356,19 @@ public class MainWindow : Window, IDisposable
                 ImGui.EndTable();
             }
             ImGui.EndChild();
-            //ImGui.PopItemWidth();
+            ImGui.Separator();
+            Vector2 multiLineSizeWindow = new Vector2(ImGui.GetWindowWidth(), 100);
+            Vector2 multiLineSize = new Vector2(ImGui.GetWindowWidth() * 0.98f, 75);
+            var style = ImGui.GetStyle();
+            var originalScrollbarSize = style.ScrollbarSize;
+            style.ScrollbarSize += 1.5f;
+            ImGui.BeginChild("Resizable Textbox", multiLineSizeWindow, false, ImGuiWindowFlags.None);
+            ImGui.Text("Notes");
+            ImGui.InputTextMultiline("##ResizableTextbox", ref notes, 100, multiLineSize, ImGuiInputTextFlags.None);
+            ImGui.EndChild();
+            style.ScrollbarSize = originalScrollbarSize;
+            ImGui.Separator();
+            ImGui.Spacing();
             ImGui.Spacing();
             ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.16f, 0.65f, 0.02f, 1));
             if (ImGui.Button("Finish Order", new Vector2(100f, 25f)))
