@@ -59,6 +59,12 @@ public class MainWindow : Window, IDisposable
         public OrderItem[] orderItems { get; set; } = orderItems;
     }
 
+    public class OrderTotalResponse
+    {
+        [JsonPropertyName("total")]
+        public uint total { get; set; }
+    }
+
     public MainWindow(Plugin plugin, string logoPath) : base(
         "Miqo'tea Room Order Manager" +
         "", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse )
@@ -117,7 +123,10 @@ public class MainWindow : Window, IDisposable
             }
             ImGui.EndDisabled();
             ImGui.End();
-            ImGui.SameLine(ImGui.GetWindowWidth() - 160);
+            ImGui.Text("Total Shift Gil: ");
+            ImGui.SameLine();
+            ImGui.TextColored(new Vector4(0, 1, 0, 1), $"{Plugin.Configuration.totalShiftGil.ToString("N0")}");
+            ImGui.SameLine(ImGui.GetWindowWidth() - 155);
             ImGui.Text("Player: ");
             ImGui.SameLine();
             ImGui.TextColored(new Vector4(0, 1, 0, 1), $"{Plugin.Configuration.player.Name}");
@@ -356,6 +365,13 @@ public class MainWindow : Window, IDisposable
                     {
                         OrderList.RemoveAt(index);
                         Plugin.Configuration.totalReceived = 0;
+                        Plugin.apiClient.GetAsync<OrderTotalResponse>("/api/v1/orders/total").ContinueWith(task => {
+                            if (task.IsCompletedSuccessfully)
+                            {
+                                var response = task.GetResultSafely();
+                                Plugin.Configuration.totalShiftGil = response.total;
+                            }
+                        });
                     }
                 });
                 

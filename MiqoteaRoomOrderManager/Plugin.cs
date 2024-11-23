@@ -139,7 +139,7 @@ namespace MiqoteaRoomOrderManager
                     players.Add(player);
                 }
             }
-            return players;
+            return players.OrderBy(p => p.Name.TextValue).ToList();
         }
 
         unsafe public uint GetGilCount()

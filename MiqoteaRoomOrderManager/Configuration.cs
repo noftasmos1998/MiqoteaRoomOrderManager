@@ -26,6 +26,7 @@ namespace MiqoteaRoomOrderManager
         public List<string> TypeOrder = new List<string> { "starter", "main", "dessert", "drink" };
         public uint currentGil { get; set; } = 0;
         public uint totalReceived { get; set; } = 0;
+        public uint totalShiftGil { get; set; } = 0;
 
         public void Save()
         {
