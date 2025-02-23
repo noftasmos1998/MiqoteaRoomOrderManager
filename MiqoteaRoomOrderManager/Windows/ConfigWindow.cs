@@ -10,6 +10,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Gui;
 using Dalamud.Interface.Windowing;
@@ -21,6 +22,7 @@ using Google.Apis.Sheets.v4;
 using ImGuiNET;
 using MiqoteaRoomOrderManager.Helpers;
 using static MiqoteaRoomOrderManager.Windows.ConfigWindow;
+using static MiqoteaRoomOrderManager.Windows.MainWindow;
 
 namespace MiqoteaRoomOrderManager.Windows;
 
@@ -34,6 +36,9 @@ public class ConfigWindow : Window, IDisposable
     public string Password = "";
     public bool isloading = false;
     public bool Error = false;
+    private readonly string[] allowedPlayers = ["Noftasmos Moon", "Vyreia Sun:", "Sage Loxley", "Ra'ish Sooyin"];
+    public string? selectedPlayer = null;
+    public string[] staffNames = [];
 
     public ConfigWindow(Plugin plugin) : base(
         "Miqo'tea Room Order Manager Config",
@@ -72,9 +77,47 @@ public class ConfigWindow : Window, IDisposable
             ImGui.Text($"Loading...");
             return;
         }
-        if(Plugin.Configuration.player != null && Plugin.Configuration.player.Name == "Noftasmos Moon"){
-            ImGui.Text($"{Plugin.Configuration.totalReceived}");
-            ImGui.Text($"{Plugin.Configuration.currentGil}");
+        if (Plugin.Configuration.player != null && Array.IndexOf(allowedPlayers, Plugin.Configuration.player.Name) != -1 && staffNames.Length > 0)
+        {
+            ImGui.Begin("Staff List");
+            ImGui.BeginChild("", new Vector2(200, 400), true);
+            foreach (var s in staffNames)
+            {
+                var isSelected = selectedPlayer != null && selectedPlayer.Equals(s);
+
+                if (ImGui.Selectable(s, isSelected))
+                {
+                    selectedPlayer = s;
+                }
+            }
+
+            ImGui.EndChild();
+            ImGui.BeginDisabled(selectedPlayer == null);
+            if (ImGui.Button("Mark their presence"))
+            {
+                Plugin.apiClient.PostAsync<MarkStaffPresenceRequest, MarkStaffPresenceResponse>($"api/v1/staff/mark-presence", new MarkStaffPresenceRequest(selectedPlayer)).ContinueWith(task =>
+                {
+                    if (task.IsCompletedSuccessfully)
+                    {
+                        selectedPlayer = null;
+                    }
+                });
+
+            }
+            ImGui.EndDisabled();
+            ImGui.End();
+        }
+        if(Plugin.Configuration.player != null && Array.IndexOf(allowedPlayers, Plugin.Configuration.player.Name) != -1){
+            _ = Plugin.apiClient.GetAsync<StaffResponse>(endpoint: "/api/v1/staff").ContinueWith(task =>
+            {
+                if (task.IsCompletedSuccessfully)
+                {
+                    var response = task.GetResultSafely();
+
+                    var staff = response.staff;
+                    staffNames = staff.Select(s => s.UserName).ToArray();
+                }
+            });
         }
         ImGui.Text($"Current linked player:");
         ImGui.SameLine();
@@ -218,6 +261,50 @@ public class ConfigWindow : Window, IDisposable
         public bool IsFinished { get; set; }
         [JsonPropertyName("isActive")]
         public bool IsActive { get; set; }
+    }
+
+    public class StaffType
+    {
+        [JsonPropertyName("id")]
+        public int Id { get; set; }
+
+        [JsonPropertyName("userName")]
+        public string UserName { get; set; }
+
+        [JsonPropertyName("role")]
+        public string Role { get; set; }
+
+        [JsonPropertyName("discordUsername")]
+        public string DiscordUsername { get; set; }
+
+        [JsonPropertyName("discordId")]
+        public string DiscordId { get; set; }
+
+        [JsonPropertyName("miqoCredits")]
+        public int MiqoCredits { get; set; }
+
+        [JsonPropertyName("createdAt")]
+        public DateTime CreatedAt { get; set; }
+
+        [JsonPropertyName("updatedAt")]
+        public DateTime UpdatedAt { get; set; }
+    }
+
+    public class StaffResponse
+    {
+        [JsonPropertyName("staff")]
+        public StaffType[] staff { get; set; }
+    }
+
+    public class MarkStaffPresenceRequest(string name)
+    {
+        public string name { get; set; } = name;
+    }
+
+    public class MarkStaffPresenceResponse
+    {
+        [JsonPropertyName("staff")]
+        public StaffType staff { get; set; }
     }
 
 }
