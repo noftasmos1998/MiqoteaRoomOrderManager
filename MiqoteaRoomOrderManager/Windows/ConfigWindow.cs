@@ -144,7 +144,14 @@ public class ConfigWindow : Window, IDisposable
             if (ImGui.Button("Link player with plugin"))
             {
                 isloading = true;
-                PlayerName = Plugin.ClientState.LocalPlayer?.Name.ToString();
+                Plugin.Framework.RunOnFrameworkThread(() =>
+                {
+                    var localPlayer = Plugin.ClientState.LocalPlayer;
+                    if (localPlayer != null)
+                    {
+                        PlayerName = localPlayer.Name.ToString();
+                    }
+                });
                 var requestBody = new PlayerRequest(PlayerName, Password);
                     _ = Plugin.apiClient.PostAsync<PlayerRequest, PlayerResponse>(endpoint: "/api/v1/login", content: requestBody).ContinueWith(task =>
                     {
@@ -159,7 +166,14 @@ public class ConfigWindow : Window, IDisposable
                             }
                             else
                             {
-                                PlayerName = Plugin.ClientState.LocalPlayer?.Name.ToString();
+                                Plugin.Framework.RunOnFrameworkThread(() =>
+                                {
+                                    var localPlayer = Plugin.ClientState.LocalPlayer;
+                                    if (localPlayer != null)
+                                    {
+                                        PlayerName = localPlayer.Name.ToString();
+                                    }
+                                });
                                 string token = response.Token;
                                 // Create the player object after the HTTP request
                                 Plugin.Configuration.player = new Player(PlayerName, token);

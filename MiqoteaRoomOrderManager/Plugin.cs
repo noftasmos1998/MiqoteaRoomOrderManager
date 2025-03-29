@@ -26,6 +26,7 @@ namespace MiqoteaRoomOrderManager
         public string Name => "Miqo'tea Room Order Manager";
         private const string CommandName = "/mroom";
 
+        [PluginService] public static IFramework Framework { get; private set; } = null!;
         [PluginService] internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
         [PluginService] internal static IChatGui ChatGui { get; private set; } = null!;
         [PluginService] internal static ITextureProvider TextureProvider { get; private set; } = null!;
